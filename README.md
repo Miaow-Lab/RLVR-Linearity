@@ -1,8 +1,10 @@
 <div align="center">
 
-# Not All Steps are Informative: On the Linearity of LLMs’ RLVR Training
+# Not All Steps are Informative: <br> On the Linearity of LLMs’ RLVR Training
 
-[![Arxiv](https://img.shields.io/badge/paper-A82F27?style=for-the-badge&logo=arxiv)](https://arxiv.org/pdf/2601.04537v1)
+[![Paper](https://img.shields.io/badge/arXiv-A82F27?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/pdf/2601.04537v1)
+[![Dataset](https://img.shields.io/badge/Datasets-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Dataset)
+<!-- [![Weights](https://img.shields.io/badge/Weights-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Checkpoints) -->
 
 <!-- Optional: Add License or Python version badges here -->
 <!-- [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) -->
@@ -10,11 +12,14 @@
 </div>
 
 > [!IMPORTANT]
-> **🌟 Please consider giving us a star to stay updated on the upcoming code release!**
+> **🌟 If you find this repository useful, please consider giving it a star!**
+> 
+> **🔥 News**
+> - **[2026/01]** We have released the full codebase, including linearity analysis, RL training on `verl`, acceleration methods, and evaluation scripts. Preprocessed RL [datasets](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Dataset) are now available.
 
 This repository contains the official implementation of the paper **"Not All Steps are Informative: On the Linearity of LLMs’ RLVR Training"**.
 
-We uncover a significant phenomenon: **during RLVR (Reinforcement Learning with Verification Rewards), LLMs evolve in a strongly linear manner.** Motivated by this observation, we investigate whether future model states can be predicted from intermediate checkpoints via extrapolation, thereby bypassing expensive continued training.
+We reveal a critical phenomenon: **during RLVR (Reinforcement Learning with Verification Rewards), LLMs evolve in a remarkably linear manner.** Leveraging this observation, we demonstrate that future model states can be accurately predicted from intermediate checkpoints via extrapolation, effectively bypassing expensive training steps.
 
 <p align="center">
 <img src="./assets/method.png" width="85%" alt="Overview" />
@@ -27,7 +32,7 @@ We uncover a significant phenomenon: **during RLVR (Reinforcement Learning with 
 </p>
 
 **Figure 1: Linearity of model weights and outputs during RLVR training.**
-(a) and (b) illustrate the distribution of $R^2$ scores for weights and token log-probabilities, respectively. Both distributions heavily concentrate around 0.9, indicating strong linearity.
+(a) and (b) show the distribution of $R^2$ scores for weights and token log-probabilities, respectively. Both distributions are strongly concentrated around 0.9, indicating high linearity.
 (c) plots the trajectories of four randomly selected weights, while (d) tracks token log-probability shifts at four example positions.
 
 <p align="center">
@@ -35,25 +40,25 @@ We uncover a significant phenomenon: **during RLVR (Reinforcement Learning with 
 </p>
 
 **Figure 2: Consistency across diverse setups.**
-The linearity holds robustly across various settings. $R^2$ scores consistently exceed 0.7 (dashed line) regardless of the base model (e.g., DS-Qwen, DS-Llama), model scale (1.5B to 8B), or training algorithm (GSPO, Reinforce++, and GRPO).
+Linearity remains robust across various settings. $R^2$ scores consistently exceed 0.7 (dashed line) regardless of the base model (e.g., DS-Qwen, DS-Llama), model scale (1.5B to 8B), or training algorithm (GSPO, Reinforce++, and GRPO).
 
-## 🚀 Accelerating RLVR with linearities
+## 🚀 Accelerating RLVR via Extrapolation
 
-Based on the linearity of RLVR training, we propose **Logits Extrapolation**, **Weight Extrapolation**, and **RL-Extra**. These methods allow us to predict model behavior at future steps using earlier trajectories, significantly accelerating training.
+Building on the linearity of RLVR training, we propose **Logits Extrapolation**, **Weight Extrapolation**, and **RL-Extra**. These methods enable the prediction of model behavior at future steps using early trajectories, significantly accelerating the training process.
 
 <p align="center">
 <img src="./assets/experiments_overall.png" width="95%" alt="Experimental Results" />
 </p>
 
 **Key Findings:**
-- **Logits Extrapolation:** Yields consistent accuracy improvements over standard RL on AIME and LiveCodeBench (LCB).
-- **Weight Extrapolation:** Demonstrates high fidelity in predicting future weights on AIME24.
-- **Efficiency:** Our methods significantly reduce the actual training steps required to reach target accuracy.
-- **RL-Extra vs. GRPO:** Under fixed training budgets (actual steps $s$), RL-Extra consistently outperforms the GRPO baseline across AIME24, AIME25, MATH500, and LiveCodeBench.
+- **Logits Extrapolation:** Delivers consistent accuracy improvements over standard RL on benchmarks like AIME and LiveCodeBench (LCB).
+- **Weight Extrapolation:** Achieves high fidelity in predicting future weights, particularly on AIME24.
+- **Efficiency:** Our methods significantly reduce the number of actual training steps required to reach target accuracy.
+- **RL-Extra vs. GRPO:** With a fixed training budget (actual steps $s$), RL-Extra consistently outperforms the GRPO baseline across AIME24, AIME25, MATH500, and LiveCodeBench.
 
 ## 🛠️ Usage
 
-### 1. Environment Setup
+### 1. Installation
 Install the `verl` environment (ensure you are in the project root):
 
 ```bash
@@ -62,20 +67,22 @@ pip3 install -e .[vllm]
 ```
 
 ### 2. Data Preparation
-We use **DeepSeek-R1-Distill-Qwen-1.5B** as the base model.
+We utilize **DeepSeek-R1-Distill-Qwen-1.5B** as the base model.
 1.  **Generate Responses:** We generated 64 responses for each AIME24 query. 
     *   Path: `evaluation/outputs/aime24_distill-qwen-1-5b.json`
 2.  **Preprocessing:** Use the provided scripts to format data for RL training and evaluation within the `verl` framework.
     *   Script location: `verl/examples/data_preprocess`
 
-> Note: The processed dataset is also available on our HuggingFace page.
+> **Note:** The processed dataset is readily available on [HuggingFace Dataset](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Dataset).
 
 ### 3. RL Training (Baseline)
-To reproduce the DeepScaleR baseline (using GRPO), run:
+To reproduce the DeepScaleR baseline (using GRPO), run the following command:
 
 ```bash
 bash verl/examples/grpo_trainer/run_distill-qwen-1-5b_deepscaler.sh
 ```
+
+<!-- > **Note:** Pre-trained RL checkpoints are available on [HuggingFace Models](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Checkpoints). -->
 
 ### 4. Linearity Analysis
 **Model Outputs (Token Log-probs):**
@@ -116,6 +123,10 @@ python evaluation/inference_vllm_offline.py \
 ```bash
 python evaluation/pass_at_k_eval.py
 ```
+
+## ✉️ Contact
+
+For questions or feedback, please contact [Tianle Wang](mailto:louis.wng@outlook.com).
 
 ## 🖊️ Citation
 
