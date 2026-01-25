@@ -1,0 +1,1 @@
+accelerate launch --num_processes 8 ./token_logprob_linearity.py
