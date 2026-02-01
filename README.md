@@ -2,7 +2,7 @@
 
 # Not All Steps are Informative: <br> On the Linearity of LLMs’ RLVR Training
 
-[![Paper](https://img.shields.io/badge/arXiv-A82F27?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/pdf/2601.04537v1)
+[![Paper](https://img.shields.io/badge/arXiv-A82F27?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/pdf/2601.04537v2)
 [![Dataset](https://img.shields.io/badge/Datasets-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Dataset)
 [![Weights](https://img.shields.io/badge/Weights-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Checkpoints)
 
