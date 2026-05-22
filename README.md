@@ -1,8 +1,8 @@
 <div align="center">
 
-# Not All Steps are Informative: <br> On the Linearity of LLMs’ RLVR Training
+# Linear Dynamics in the RLVR Training of Large Language Models
 
-[![Paper](https://img.shields.io/badge/arXiv-A82F27?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/pdf/2601.04537v2)
+[![Paper](https://img.shields.io/badge/arXiv-A82F27?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2601.04537v3)
 [![Dataset](https://img.shields.io/badge/Datasets-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Dataset)
 [![Weights](https://img.shields.io/badge/Weights-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/Miaow-Lab/RLVR-Linearity-Checkpoints)
 
@@ -15,46 +15,65 @@
 > **🌟 If you find this repository useful, please consider giving it a star!**
 > 
 > **🔥 News**
+> - **[2026/05]** We added more experiments and a more detailed explanation of this phenomenon.
 > - **[2026/01]** We have released the full codebase, including linearity analysis, RL training on `verl`, acceleration methods, and evaluation scripts. Preprocessed RL [datasets](https://huggingface.co/datasets/Miaow-Lab/RLVR-Linearity-Dataset) and [checkpoints](https://huggingface.co/Miaow-Lab/RLVR-Linearity-Checkpoints) are now available.
 
-This repository contains the official implementation of the paper **"Not All Steps are Informative: On the Linearity of LLMs’ RLVR Training"**.
+This repository contains the official implementation of the paper **"Linear Dynamics in the RLVR Training of Large Language Models"**.
 
-We reveal a critical phenomenon: **during RLVR (Reinforcement Learning with Verification Rewards), LLMs evolve in a remarkably linear manner.** Leveraging this observation, we demonstrate that future model states can be accurately predicted from intermediate checkpoints via extrapolation, effectively bypassing expensive training steps.
+Reinforcement learning with verifiable rewards (RLVR) has become a key post-training stage for reasoning-oriented LLMs, but its internal training dynamics remain largely opaque. This work studies RLVR at the trajectory level and uncovers a **robust linear regime**: across model families, RL algorithms, and training configurations, both parameter weights and output log-probabilities evolve along highly linear directions.
+
+The linear structure is not only descriptive. We show that noisy, high-variance RLVR reward signals can concentrate optimization into a stable low-dimensional drift, and that this structure can be used to predict future model states through output-space and weight-space extrapolation.
 
 <p align="center">
-<img src="./assets/method.png" width="85%" alt="Overview" />
+<img src="./assets/overview.png" width="85%" alt="Overview" />
 </p>
 
 ## 📊 Linearity Analysis
 
-<p align="center">
-<img src="./assets/weight_token-logprob_r2.png" width="95%" alt="weight_token-logprob_r2" />
-</p>
+We measure trajectory linearity with the coefficient of determination, $R^2$, over intermediate RLVR checkpoints. The main empirical finding is that RLVR trajectories are far more structured than their apparent complexity suggests:
 
-**Figure 1: Linearity of model weights and outputs during RLVR training.**
-(a) and (b) show the distribution of $R^2$ scores for weights and token log-probabilities, respectively. Both distributions are strongly concentrated around 0.9, indicating high linearity.
-(c) plots the trajectories of four randomly selected weights, while (d) tracks token log-probability shifts at four example positions.
-
-<p align="center">
-<img src="./assets/r2_generalization_analysis.png" width="95%" alt="r2_generalization_analysis" />
-</p>
-
-**Figure 2: Consistency across diverse setups.**
-Linearity remains robust across various settings. $R^2$ scores consistently exceed 0.7 (dashed line) regardless of the base model (e.g., DS-Qwen, DS-Llama), model scale (1.5B to 8B), or training algorithm (GSPO, Reinforce++, and GRPO).
-
-## 🚀 Accelerating RLVR via Extrapolation
-
-Building on the linearity of RLVR training, we propose **Logits Extrapolation**, **Weight Extrapolation**, and **RL-Extra**. These methods enable the prediction of model behavior at future steps using early trajectories, significantly accelerating the training process.
+- **Weight-space linearity:** Most trainable parameters are well approximated by linear trends during RLVR, with over 70% of weights achieving $R^2 > 0.7$ in the DeepScaleR setting.
+- **Output-space linearity:** Token log-probabilities measured by teacher-forced evaluation also concentrate near high $R^2$ values, showing that the linear regime is reflected in model behavior rather than only in parameters.
+- **Activation linearity:** Intermediate activations exhibit similar trends, linking linear weight evolution to downstream output changes.
+- **Robustness:** The phenomenon persists across 13 settings spanning 1.5B-32B models, Qwen and Llama architectures, dense and MoE models, reasoning and non-reasoning data, GRPO, REINFORCE++, GSPO, different learning rates, batch sizes, and rollout counts.
 
 <p align="center">
-<img src="./assets/experiments_overall.png" width="95%" alt="Experimental Results" />
+<img src="./assets/r2_robustness.png" width="95%" alt="RLVR trajectory linearity across diverse experimental settings" />
 </p>
 
-**Key Findings:**
-- **Logits Extrapolation:** Delivers consistent accuracy improvements over standard RL on benchmarks like AIME and LiveCodeBench (LCB).
-- **Weight Extrapolation:** Achieves high fidelity in predicting future weights, particularly on AIME24.
-- **Efficiency:** Our methods significantly reduce the number of actual training steps required to reach target accuracy.
-- **RL-Extra vs. GRPO:** With a fixed training budget (actual steps $s$), RL-Extra consistently outperforms the GRPO baseline across AIME24, AIME25, MATH500, and LiveCodeBench.
+## 🔎 Origins of Linearity during RLVR
+
+We test several plausible explanations and find that they do not fundamentally induce RLVR linearity. The linear regime persists when weights undergo non-trivial relative changes, when AdamW is replaced by vanilla SGD, and when RLVR is run without SFT initialization.
+
+The key driver is the noisy and sparse nature of RLVR supervision. Since token-level credit is assigned from final answer correctness, per-step gradients contain high variance. When aggregated over long windows, these noisy updates cancel many fine-grained fluctuations and preserve frequent, high-level successful patterns. This acts like a low-pass filter, producing a stable drift direction in weight space.
+
+Controlled noise-injection experiments support this mechanism: adding reward-style noise to SFT increases weight trajectory linearity, and the observed trend matches the theoretical account based on high-variance update aggregation.
+
+<p align="center">
+<img src="./assets/token_snr.png" height="260" alt="Token-level SNR controls weight-space linearity" />
+&nbsp;
+<img src="./assets/source_output_change.png" height="260" alt="Source of output changes in a representative LLM layer" />
+</p>
+
+## 🚀 Predictive Extrapolation of RLVR Trajectories
+
+The robust linear regime enables direct prediction of future model states from earlier checkpoints.
+
+- **Output-space Extrapolation:** Future logits are estimated from two earlier checkpoints, providing a training-free intervention that consistently improves over standard RL on AIME24, AIME25, MATH500, and LiveCodeBench, with a **+4.2%** average improvement.
+- **Weight-Space Extrapolation:** Future parameters are predicted directly in weight space, producing complete lookahead models that closely match or improve upon continued RL training when extrapolation is moderate.
+- **Periodic Re-grounding:** Standard RL updates are interleaved with gradient-free weight projections to control long-horizon extrapolation error. This improves performance under fixed training budgets and reaches up to a **6.1x** training speedup.
+
+<p align="center">
+<img src="./assets/output_extra.png" height="220" alt="Output-space extrapolation performance" />
+&nbsp;
+<img src="./assets/weight_extra.png" height="220" alt="Weight-space extrapolation performance" />
+&nbsp;
+<img src="./assets/regrounding_efficiency.png" height="220" alt="Periodic re-grounding training efficiency" />
+</p>
+
+<p align="center">
+<img src="./assets/regrounding_performance.png" width="95%" alt="Periodic re-grounding performance under fixed training budgets" />
+</p>
 
 ## 🛠️ Usage
 
@@ -103,13 +122,13 @@ Perform linear regression on model weights across training steps.
 bash scripts/run_weight_linearity.sh
 ```
 
-### 5. Extrapolation Methods & RL-Extra
+### 5. Extrapolation Methods & Periodic Re-grounding
 
 | Method | Description | Command |
 | :--- | :--- | :--- |
 | **Logits Extrapolation** | Extrapolates logits to improve performance. | `bash scripts/run_logits_extrapolation.sh` |
 | **Weight Extrapolation** | Extrapolates weights to accelerate RLVR. | `bash scripts/run_weight_extrapolation.sh` |
-| **RL-Extra** | Corrects gradient trajectory for efficiency. | `bash scripts/run_rl_extrapolation.sh` |
+| **Periodic Re-grounding** | Corrects gradient trajectory for efficiency. | `bash scripts/run_rl_extrapolation.sh` |
 
 ### 6. Evaluation
 **Inference (vLLM):**
@@ -133,13 +152,13 @@ For questions or feedback, please contact [Tianle Wang](mailto:louis.wng@outlook
 If you find this work helpful, please cite our paper:
 
 ```bibtex
-@misc{wang2026stepsinformativelinearityllms,
-      title={Not All Steps are Informative: On the Linearity of LLMs' RLVR Training}, 
-      author={Tianle Wang and Zhongyuan Wu and Shenghao Jin and Hao Xu and Wei Chen and Ning Miao},
+@misc{wang2026lineardynamicsrlvrtraining,
+      title={Linear Dynamics in the RLVR Training of Large Language Models},
+      author={Tianle Wang and Jiayu Liu and Zhongyuan Wu and Shenghao Jin and Wei Chen and Hao Xu and Ning Miao},
       year={2026},
       eprint={2601.04537},
       archivePrefix={arXiv},
       primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2601.04537}, 
+      url={https://arxiv.org/abs/2601.04537},
 }
 ```
