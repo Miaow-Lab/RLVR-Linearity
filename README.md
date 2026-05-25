@@ -63,13 +63,9 @@ The robust linear regime enables direct prediction of future model states from e
 - **Weight-Space Extrapolation:** Future parameters are predicted directly in weight space, producing complete lookahead models that closely match or improve upon continued RL training when extrapolation is moderate.
 - **Periodic Re-grounding:** Standard RL updates are interleaved with gradient-free weight projections to control long-horizon extrapolation error. This improves performance under fixed training budgets and reaches up to a **6.1x** training speedup.
 
-<p align="center">
-<img src="./assets/output_extra.png" height="220" alt="Output-space extrapolation performance" />
-&nbsp;
-<img src="./assets/weight_extra.png" height="220" alt="Weight-space extrapolation performance" />
-&nbsp;
-<img src="./assets/regrounding_efficiency.png" height="220" alt="Periodic re-grounding training efficiency" />
-</p>
+|  |  |  |
+| :---: | :---: | :---: |
+| <img src="./assets/output_extra.png" width="100%" alt="Output-space extrapolation performance" /> | <img src="./assets/weight_extra.png" width="100%" alt="Weight-space extrapolation performance" /> | <img src="./assets/regrounding_efficiency.png" width="100%" alt="Periodic re-grounding training efficiency" /> |
 
 <p align="center">
 <img src="./assets/regrounding_performance.png" width="95%" alt="Periodic re-grounding performance under fixed training budgets" />
